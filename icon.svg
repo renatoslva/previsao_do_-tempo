@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Tempo Bolsa">
+  <rect width="512" height="512" rx="96" fill="#1261a6"/>
+  <path d="M120 334h272v54H120z" fill="#ffffff" opacity=".95"/>
+  <path d="M144 292l64-72 62 48 88-118 44 33-127 170-62-48-43 48z" fill="#f0b429"/>
+  <circle cx="160" cy="150" r="50" fill="#ffffff" opacity=".95"/>
+  <path d="M241 159c11-40 47-67 90-67 55 0 98 43 98 96s-43 96-98 96h-97c-35 0-62-27-62-62 0-31 21-56 50-61 6-1 13-2 19-2z" fill="#dff3ff"/>
+  <text x="256" y="438" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="900" fill="#ffffff">TB</text>
+</svg>

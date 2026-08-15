@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="App em JavaScript com previsão do tempo semanal, horário local, bolsa de valores e planilha de economia pessoal.">
+  <meta name="theme-color" content="#1261a6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tempo Bolsa">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <title>Tempo, Bolsa e Economia</title>
+
+  <style>
+    :root {
+      --ink:#13202e; --muted:#5c6978; --paper:#f4f7f9; --white:#fff;
+      --line:#d9e2ea; --blue:#1261a6; --green:#0f7b59; --red:#c0393f;
+      --gold:#f0b429; --radius:8px;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);line-height:1.55}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    .wrap{max-width:1180px;margin:auto;padding:0 18px}
+    .topbar{position:sticky;top:0;z-index:20;background:#fffffff2;border-bottom:1px solid var(--line)}
+    .nav{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+    .brand-icon{width:42px;height:42px;border-radius:8px;display:grid;place-items:center;color:white;background:linear-gradient(135deg,var(--blue),var(--green))}
+    .links{display:flex;gap:8px;flex-wrap:wrap}
+    .links a{color:var(--ink);text-decoration:none;font-weight:800;padding:8px 10px;border-radius:8px}
+    .links a:hover{background:#eef3f6}
+    .hero{padding:54px 0 32px;background:linear-gradient(135deg,#0e2d4b,#0e5b4a);color:white}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center}
+    h1,h2,h3,p{margin-top:0}
+    h1{font-size:clamp(38px,7vw,72px);line-height:1;margin-bottom:14px}
+    h2{font-size:clamp(28px,4vw,46px);line-height:1.05;margin-bottom:10px}
+    .hero p{color:#dbeaf4;font-size:19px}
+    .hero-card{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:22px}
+    .clock{font-size:clamp(38px,6vw,58px);font-weight:900;line-height:1}
+    .date{color:#dbeaf4;font-weight:700}
+    section{padding:58px 0}
+    .section-head{display:grid;grid-template-columns:1fr minmax(260px,420px);gap:24px;align-items:end;margin-bottom:22px}
+    .muted,.small,.card p{color:var(--muted)}
+    .panel,.card,.summary-box{background:white;border:1px solid var(--line);border-radius:var(--radius)}
+    .panel{padding:18px}
+    .band{background:white;border-block:1px solid var(--line)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .field{min-height:44px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:white;min-width:180px}
+    .field.wide{flex:1;min-width:240px}
+    .btn{min-height:44px;border:0;border-radius:8px;padding:10px 14px;font-weight:900}
+    .btn-primary{background:var(--blue);color:white}
+    .btn-green{background:var(--green);color:white}
+    .btn-light{background:#edf3f7;color:var(--ink);border:1px solid var(--line)}
+    .weather-now{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px;margin-bottom:16px}
+    .now-temp{font-size:62px;font-weight:900;line-height:1;color:var(--blue)}
+    .weather-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+    .day{padding:14px;background:white;border:1px solid var(--line);border-radius:8px;min-height:156px}
+    .weather-code{font-size:30px;margin:8px 0}
+    .temp-line{font-weight:900}
+    .stock-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .stock{padding:16px;background:white;border:1px solid var(--line);border-radius:8px}
+    .ticker{font-size:22px;font-weight:900}
+    .price{font-size:28px;font-weight:900;margin:8px 0}
+    .up{color:var(--green)}
+    .down{color:var(--red)}
+    .score{display:inline-flex;padding:5px 8px;border-radius:8px;background:#e8f2fb;font-weight:900}
+    .best{border-color:var(--green);box-shadow:inset 0 0 0 2px rgba(15,123,89,.18)}
+    .table-wrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:8px}
+    table{width:100%;border-collapse:collapse;min-width:760px}
+    th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left}
+    th{background:#eef3f6;font-size:13px;text-transform:uppercase}
+    .money{font-weight:900}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+    .summary-box{padding:14px}
+    .summary-box strong{display:block;font-size:22px}
+    .danger{background:#fff1f2;color:#8a1f2d}
+    .notice{margin-top:14px;padding:13px;border-radius:8px;background:#fff7dc;border:1px solid #ead58d;color:#473a11}
+    .install-box{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:16px;padding:13px;border-radius:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}
+    .install-box p{margin:0;color:#e8f3fa}
+    .hidden{display:none!important}
+    @media(max-width:980px){.hero-grid,.section-head,.weather-now{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(3,1fr)}.stock-grid,.summary{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.nav{align-items:flex-start;flex-direction:column;padding:12px 0}.links{width:100%}.weather-grid,.stock-grid,.summary{grid-template-columns:1fr}}
+  </style>
+</head>
+
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand"><span class="brand-icon">TB</span><span>Tempo, Bolsa e Economia</span></div>
+      <div class="links">
+        <a href="#tempo">Tempo</a>
+        <a href="#bolsa">Bolsa</a>
+        <a href="#planilha">Planilha</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Seu painel do dia</h1>
+      <p>Veja previsão da semana, horário local, cotações de ações brasileiras e acompanhe quanto dinheiro você está guardando.</p>
+    </div>
+    <div class="hero-card">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date" id="clockDate">Carregando horário...</div>
+      <p class="small" id="clockCity">Use a busca de cidade para ajustar o fuso horário.</p>
+      <div class="install-box hidden" id="installBox">
+        <p>Instale no celular e abra como aplicativo.</p>
+        <button class="btn btn-primary" id="installApp" type="button">Instalar app</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+<section id="tempo">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Previsão do tempo</h2>
+        <p>Busca por cidade com previsão semanal usando a API pública Open-Meteo.</p>
+      </div>
+      <p class="muted">Digite uma cidade, por exemplo: São Paulo, Rio de Janeiro, Salvador, Brasília ou Curitiba.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <input class="field wide" id="cityInput" type="search" value="São Paulo" placeholder="Digite a cidade">
+        <button class="btn btn-primary" id="weatherBtn" type="button">Buscar previsão</button>
+      </div>
+
+      <div class="weather-now">
+        <div class="panel">
+          <h3 id="weatherPlace">Cidade</h3>
+          <div class="now-temp" id="nowTemp">--°</div>
+          <p id="nowDesc" class="muted">Condição atual</p>
+        </div>
+        <div class="panel">
+          <h3>Detalhes</h3>
+          <p id="weatherDetails" class="muted">Temperatura máxima, mínima, chuva e vento aparecerão aqui.</p>
+          <p class="small">Fonte: Open-Meteo.</p>
+        </div>
+      </div>
+
+      <div class="weather-grid" id="weatherGrid"></div>
+    </div>
+  </div>
+</section>
+
+<section id="bolsa" class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Bolsa de valores</h2>
+        <p>Consulta cotações e calcula uma pontuação educativa para destacar o ativo mais forte entre os pesquisados.</p>
+      </div>
+      <p class="muted">Isto não é recomendação financeira. É apenas informação educativa.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <input class="field wide" id="stockInput" type="text" value="PETR4,VALE3,MGLU3,ITUB4" placeholder="Ex: PETR4,VALE3,ITUB4">
+        <button class="btn btn-green" id="stockBtn" type="button">Atualizar bolsa</button>
+      </div>
+
+      <div id="bestStock" class="notice">A melhor pontuação do dia aparecerá aqui.</div>
+      <div class="stock-grid" id="stockGrid"></div>
+    </div>
+  </div>
+</section>
+
+<section id="planilha">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Planilha de dinheiro guardado</h2>
+        <p>Cadastre seus depósitos, veja total guardado, média e progresso da meta.</p>
+      </div>
+      <p class="muted">Os dados ficam salvos no navegador do aparelho.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <input class="field" id="saveDate" type="month">
+        <input class="field" id="saveDesc" type="text" placeholder="Descrição">
+        <input class="field" id="saveAmount" type="number" min="0" step="0.01" placeholder="Valor guardado">
+        <input class="field" id="saveGoal" type="number" min="0" step="0.01" placeholder="Meta total">
+        <button class="btn btn-primary" id="addSave" type="button">Adicionar</button>
+      </div>
+
+      <div class="summary">
+        <div class="summary-box"><span class="muted">Total guardado</span><strong id="totalSaved">R$ 0,00</strong></div>
+        <div class="summary-box"><span class="muted">Meta</span><strong id="goalValue">R$ 0,00</strong></div>
+        <div class="summary-box"><span class="muted">Progresso</span><strong id="goalProgress">0%</strong></div>
+        <div class="summary-box"><span class="muted">Média por mês</span><strong id="avgSaved">R$ 0,00</strong></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mês</th><th>Descrição</th><th>Valor</th><th>Ação</th></tr></thead>
+          <tbody id="savingsRows"></tbody>
+        </table>
+      </div>
+
+      <div class="toolbar" style="margin-top:16px">
+        <button class="btn btn-light" id="exportCsv" type="button">Exportar CSV</button>
+        <button class="btn danger" id="clearSavings" type="button">Limpar planilha</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+let deferredInstallPrompt=null;
+const installBox=document.getElementById("installBox");
+const installApp=document.getElementById("installApp");
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+
+window.addEventListener("beforeinstallprompt",(event)=>{
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  installBox.classList.remove("hidden");
+});
+
+installApp.addEventListener("click",async()=>{
+  if(!deferredInstallPrompt){
+    alert("No celular, abra o menu do navegador e toque em Adicionar à tela inicial.");
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  installBox.classList.add("hidden");
+});
+
+const weatherCodes={
+  0:["☀️","Céu limpo"],1:["🌤️","Poucas nuvens"],2:["⛅","Parcialmente nublado"],3:["☁️","Nublado"],
+  45:["🌫️","Neblina"],51:["🌦️","Garoa fraca"],53:["🌦️","Garoa"],55:["🌧️","Garoa forte"],
+  61:["🌧️","Chuva fraca"],63:["🌧️","Chuva"],65:["⛈️","Chuva forte"],
+  80:["🌦️","Pancadas fracas"],81:["🌧️","Pancadas"],82:["⛈️","Pancadas fortes"],95:["⛈️","Tempestade"]
+};
+
+const money=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+let activeTimezone=Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
+let activePlace="São Paulo";
+
+function codeInfo(code){return weatherCodes[code] || ["🌡️","Condição não informada"];}
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById("clock").textContent=new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:activeTimezone}).format(now);
+  document.getElementById("clockDate").textContent=new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric",timeZone:activeTimezone}).format(now);
+  document.getElementById("clockCity").textContent=`Horário em ${activePlace} · ${activeTimezone}`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+async function loadWeather(){
+  const city=document.getElementById("cityInput").value.trim();
+  if(!city)return alert("Digite uma cidade.");
+
+  const placeEl=document.getElementById("weatherPlace");
+  const grid=document.getElementById("weatherGrid");
+  placeEl.textContent="Buscando...";
+  grid.innerHTML="";
+
+  try{
+    const geoUrl=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
+    const geo=await fetch(geoUrl).then(r=>r.json());
+    if(!geo.results || !geo.results.length)throw new Error("Cidade não encontrada.");
+
+    const loc=geo.results[0];
+    activeTimezone=loc.timezone || "auto";
+    activePlace=`${loc.name}${loc.admin1 ? ", "+loc.admin1 : ""}`;
+    updateClock();
+
+    const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=auto`;
+    const data=await fetch(weatherUrl).then(r=>r.json());
+    const current=data.current;
+    const currentInfo=codeInfo(current.weather_code);
+
+    placeEl.textContent=activePlace;
+    document.getElementById("nowTemp").textContent=`${Math.round(current.temperature_2m)}°C`;
+    document.getElementById("nowDesc").textContent=`${currentInfo[0]} ${currentInfo[1]}`;
+    document.getElementById("weatherDetails").textContent=`Umidade ${current.relative_humidity_2m}% · vento ${Math.round(current.wind_speed_10m)} km/h.`;
+
+    grid.innerHTML=data.daily.time.map((day,index)=>{
+      const info=codeInfo(data.daily.weather_code[index]);
+      const label=new Intl.DateTimeFormat("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit",timeZone:activeTimezone}).format(new Date(day+"T12:00:00"));
+      return `<article class="day">
+        <strong>${label}</strong>
+        <div class="weather-code">${info[0]}</div>
+        <div>${info[1]}</div>
+        <div class="temp-line">${Math.round(data.daily.temperature_2m_min[index])}° / ${Math.round(data.daily.temperature_2m_max[index])}°C</div>
+        <small>Chuva ${data.daily.precipitation_probability_max[index] ?? 0}% · vento ${Math.round(data.daily.wind_speed_10m_max[index] || 0)} km/h</small>
+      </article>`;
+    }).join("");
+  }catch(error){
+    placeEl.textContent="Erro ao buscar previsão";
+    document.getElementById("nowTemp").textContent="--°";
+    document.getElementById("nowDesc").textContent=error.message;
+  }
+}
+
+function stockScore(stock){
+  const change=Number(stock.regularMarketChangePercent || 0);
+  const high=Number(stock.regularMarketDayHigh || stock.regularMarketPrice || 0);
+  const low=Number(stock.regularMarketDayLow || stock.regularMarketPrice || 0);
+  const price=Number(stock.regularMarketPrice || 0);
+  const rangePenalty=price>0 ? ((high-low)/price)*20 : 0;
+  return Math.round((50 + change*8 - rangePenalty)*10)/10;
+}
+
+async function loadStocks(){
+  const symbols=document.getElementById("stockInput").value.replace(/\s/g,"").toUpperCase();
+  if(!symbols)return alert("Digite pelo menos um código de ação.");
+
+  const grid=document.getElementById("stockGrid");
+  const best=document.getElementById("bestStock");
+  grid.innerHTML="";
+  best.textContent="Carregando cotações...";
+
+  try{
+    const url=`https://brapi.dev/api/v2/stocks/quote?symbols=${encodeURIComponent(symbols)}`;
+    const data=await fetch(url).then(r=>r.json());
+    const stocks=data.results || [];
+    if(!stocks.length)throw new Error("Nenhuma cotação encontrada.");
+
+    const ranked=stocks.map(stock=>({...stock,score:stockScore(stock)})).sort((a,b)=>b.score-a.score);
+    const top=ranked[0];
+    best.textContent=`Maior pontuação educativa hoje: ${top.symbol} (${top.score} pontos). Isso não é recomendação de compra.`;
+
+    grid.innerHTML=ranked.map(stock=>{
+      const change=Number(stock.regularMarketChangePercent || 0);
+      const cls=change>=0 ? "up" : "down";
+      const isBest=stock.symbol===top.symbol ? "best" : "";
+      return `<article class="stock ${isBest}">
+        <div class="ticker">${stock.symbol}</div>
+        <div class="muted">${stock.shortName || stock.longName || "Ativo B3"}</div>
+        <div class="price">${money.format(Number(stock.regularMarketPrice || 0))}</div>
+        <div class="${cls}">${change.toFixed(2)}%</div>
+        <p class="small">Máx: ${money.format(Number(stock.regularMarketDayHigh || 0))} · Mín: ${money.format(Number(stock.regularMarketDayLow || 0))}</p>
+        <span class="score">Pontuação ${stock.score}</span>
+      </article>`;
+    }).join("");
+  }catch(error){
+    best.textContent=error.message;
+  }
+}
+
+const storageKey="tempoBolsaEconomia.savings.v1";
+let savings=JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+function saveSavings(){localStorage.setItem(storageKey,JSON.stringify(savings));}
+
+function renderSavings(){
+  const rows=document.getElementById("savingsRows");
+  const total=savings.reduce((sum,item)=>sum+item.amount,0);
+  const goal=Number(document.getElementById("saveGoal").value || localStorage.getItem(storageKey+".goal") || 0);
+  const avg=savings.length ? total/savings.length : 0;
+  const progress=goal>0 ? Math.min(100,(total/goal)*100) : 0;
+
+  document.getElementById("totalSaved").textContent=money.format(total);
+  document.getElementById("goalValue").textContent=money.format(goal);
+  document.getElementById("goalProgress").textContent=`${progress.toFixed(1)}%`;
+  document.getElementById("avgSaved").textContent=money.format(avg);
+
+  rows.innerHTML=savings.length ? savings.map((item,index)=>`<tr>
+    <td>${item.date}</td>
+    <td>${item.desc}</td>
+    <td class="money">${money.format(item.amount)}</td>
+    <td><button class="btn btn-light" type="button" onclick="removeSaving(${index})">Remover</button></td>
+  </tr>`).join("") : `<tr><td colspan="4" class="muted">Nenhum valor cadastrado ainda.</td></tr>`;
+}
+
+function addSaving(){
+  const date=document.getElementById("saveDate").value;
+  const desc=document.getElementById("saveDesc").value.trim() || "Dinheiro guardado";
+  const amount=Number(document.getElementById("saveAmount").value || 0);
+  const goal=Number(document.getElementById("saveGoal").value || 0);
+  if(!date)return alert("Escolha o mês.");
+  if(amount<=0)return alert("Digite um valor maior que zero.");
+
+  if(goal>0)localStorage.setItem(storageKey+".goal",String(goal));
+  savings.push({date,desc,amount});
+  savings.sort((a,b)=>a.date.localeCompare(b.date));
+  saveSavings();
+  document.getElementById("saveAmount").value="";
+  document.getElementById("saveDesc").value="";
+  renderSavings();
+}
+
+window.removeSaving=function(index){
+  savings.splice(index,1);
+  saveSavings();
+  renderSavings();
+};
+
+function exportCsv(){
+  const header="mes,descricao,valor\n";
+  const body=savings.map(item=>`${item.date},"${item.desc.replaceAll('"','""')}",${item.amount}`).join("\n");
+  const blob=new Blob([header+body],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;
+  link.download="dinheiro-guardado.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearSavings(){
+  if(!confirm("Tem certeza que quer apagar a planilha?"))return;
+  savings=[];
+  saveSavings();
+  renderSavings();
+}
+
+document.getElementById("weatherBtn").addEventListener("click",loadWeather);
+document.getElementById("stockBtn").addEventListener("click",loadStocks);
+document.getElementById("addSave").addEventListener("click",addSaving);
+document.getElementById("exportCsv").addEventListener("click",exportCsv);
+document.getElementById("clearSavings").addEventListener("click",clearSavings);
+document.getElementById("saveGoal").addEventListener("input",()=>{
+  localStorage.setItem(storageKey+".goal",document.getElementById("saveGoal").value || "0");
+  renderSavings();
+});
+
+const now=new Date();
+document.getElementById("saveDate").value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+document.getElementById("saveGoal").value=localStorage.getItem(storageKey+".goal") || "";
+renderSavings();
+loadWeather();
+loadStocks();
+</script>
+</body>
+</html>
